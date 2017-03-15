@@ -4,13 +4,13 @@ public class Node {
   public float cx, cy;
   public Color col;
   private int id;
+  public String tag;
   
-  public Node(int id, int x, int y, Color col) {
+  public Node(int id, float x, float y, Color col) {
     cx = x;
     cy = y;
     this.col = col;
     this.id = id;
-    print("Knoten hinzugefügt\n");
   }
  
   // convienience is business
@@ -42,6 +42,8 @@ public class Node {
     }
     
     ellipse(cx, cy, 20, 20);
+    
+    if(tag != null) drawTag();
   }
   
   // Zeichnen, falls die Maus über dem Knoten liegt
@@ -49,6 +51,8 @@ public class Node {
     noStroke();
     fill(127, 127, 255);
     ellipse(cx, cy, 25, 25);
+    
+    if(tag != null) drawTag();
   }
   
   // Zeichnen, falls aktiviert
@@ -56,6 +60,8 @@ public class Node {
     noStroke();
     fill(255, 0, 255);
     ellipse(cx, cy, 25, 25);
+    
+    if(tag != null) drawTag();
   }
   
   // Zeichnen, falls Spezialll
@@ -63,6 +69,32 @@ public class Node {
     noStroke();
     fill(255, 255, 0);
     ellipse(cx, cy, 25, 25);
+    
+    if(tag != null) drawTag();
+  }
+  
+  public void drawTag() {
+    // background
+    noStroke();
+    fill(0, 0, 0, 127);
+    rect(cx+20, cy-10, 5+5*(tag.length()), 10);
+    
+    // text
+    fill(255);
+    textSize(10);
+    text(tag, cx+25, cy);
+  }
+  
+  public void drawSpecialTag(int tag) {
+    // background
+    noStroke();
+    fill(0, 0, 0, 127);
+    rect(cx+20, cy+5, 10+(5*(floor(log(tag)))), 10);
+    
+    // text
+    fill(255, 255, 0);
+    textSize(10);
+    text(tag, cx+25, cy+15);
   }
   
   // SparseArray as HashMap…

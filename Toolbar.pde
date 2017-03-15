@@ -1,6 +1,7 @@
 import javax.swing.*;
 import javax.swing.event.*;
 import java.awt.*;
+import java.awt.event.*;
 
 public class Toolbar {
   
@@ -22,7 +23,9 @@ public class ToolPanel extends JPanel {
   
   private final JSlider weightSlider;
   private final JSlider dijkstraDelay;
+  private final JCheckBox bidirectional;
   private final Settings settings;
+  private final JButton loadBtn, saveBtn;
   
   public ToolPanel(Settings _settings) {
     this.settings = _settings;
@@ -50,8 +53,54 @@ public class ToolPanel extends JPanel {
     dijkstraDelay.setPaintLabels(true);
     dijkstraDelay.addChangeListener(new ChangeListener() {
       public void stateChanged(ChangeEvent e) {
-        JSlider source = (JSlider) e.getSource();
-        settings.calculationDelay = ((int)source.getValue());
+        settings.calculationDelay = ((int)dijkstraDelay.getValue());
+      }
+    });
+    
+    bidirectional = new JCheckBox();
+    bidirectional.addChangeListener(new ChangeListener() {
+      public void stateChanged(ChangeEvent e) {
+        settings.bidirectionalConnection = bidirectional.isSelected();
+      }
+    });
+    
+    loadBtn = new JButton("Load");
+    loadBtn.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        if(dik != null)
+          dik.stop();
+        dik = null;
+        settings.isCalculating = true;
+        loading = true;
+        // Wait for current draw call to finish
+        try {
+          Thread.sleep(500);
+        } catch(InterruptedException ignored) {}
+        try { load(); }
+        catch(Exception ex) { 
+          System.out.println("Error loading JSON"); 
+          ex.printStackTrace();
+        } finally {
+          settings.isCalculating = false;
+          loading = false;
+        }
+      }
+    });
+    
+    saveBtn = new JButton("Save");
+    saveBtn.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        if(dik != null)
+          dik.stop();
+        dik = null;
+        settings.isCalculating = true;
+        try { save(); }
+        catch(IOException ex) { 
+          System.out.println("Error saving JSON"); 
+          ex.printStackTrace();
+        } finally {
+          settings.isCalculating = false;
+        }
       }
     });
     
@@ -59,6 +108,9 @@ public class ToolPanel extends JPanel {
     
     add(weightSlider);
     add(dijkstraDelay);
+    add(bidirectional);
+    add(loadBtn);
+    add(saveBtn);
   }
   
 }

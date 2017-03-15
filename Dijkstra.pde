@@ -61,9 +61,13 @@ public class Dijkstra implements Runnable {
         settings.isCalculating = false;
         if(highlight != null)
           highlight.col = Color.DEFAULT;
+        highlight = null;
         return;
       }
     }
+    if(highlight != null)
+      highlight.col = Color.DEFAULT;
+    highlight = null;
     work();
     settings.isCalculating = false;
   }
@@ -113,7 +117,7 @@ public class Dijkstra implements Runnable {
 
   private int getDistance(Node node, Node target) {
     for (Connection conn : conns) {
-      if (conn.in == node && conn.out == target) {
+      if ((conn.in == node && conn.out == target) || (conn.bidir && conn.out == node && conn.in == target)) {
         return conn.weight;
       }
     }
@@ -123,8 +127,11 @@ public class Dijkstra implements Runnable {
   private List<Node> getNeighbors(Node node) {
     List<Node> neighbors = new ArrayList<Node>();
     for (Connection conn : conns) {
+      // Bidirectional node attached
       if (conn.in == node && !settledNodes.contains(conn.out)) {
         neighbors.add(conn.out);
+      } else if (conn.bidir && conn.out == node && !settledNodes.contains(conn.in)) {
+        neighbors.add(conn.in);
       }
     }
     return neighbors;

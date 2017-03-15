@@ -37,6 +37,7 @@ boolean spast = false;
 Random rand = new Random(); 
 boolean vibr = false;
 boolean freeze = false;
+boolean loading = false;
 
 // Ablaufen
 CalcMode calcMode = CalcMode.OFF;
@@ -58,6 +59,7 @@ int tick = Integer.MIN_VALUE;
 class Settings {
   int connectionWeight = 5;
   int calculationDelay = 5;
+  boolean bidirectionalConnection = false;
   // Mutex
   boolean isCalculating = false;
   LinkedList<Node> path = null;
@@ -68,6 +70,7 @@ void setup() {
   size(640, 480, P2D);
   smooth();
   colorMode(RGB);
+  frameRate(60);
 
   settings = new Settings();
   toolbar = new Toolbar(settings);
@@ -77,6 +80,15 @@ void setup() {
 // also vorsicht
 void draw() {
   tick++;
+  
+  if(loading) {
+    background(
+        (sin((tick*2*PI)/255)*128)+127, 
+        (sin(((tick+63)*2*PI)/255)*128)+127, 
+        (sin(((tick+127)*2*PI)/255)*128)+127
+    );
+    return;
+  }
 
   noStroke();
 
@@ -106,7 +118,10 @@ void draw() {
   }
 
   // Alle Verbindungen zeichnen
+  // (in Wahrheit nicht mehr als 1000);
+  int i = 0;
   for (Connection c : conns) {
+    if (i++ > 1000) break;
     c.draw();
   }
 
@@ -135,7 +150,7 @@ void draw() {
       for (Node n : nodes) {
         if (n.isMouseOn(mouseX, mouseY) && n != selection && !settings.isCalculating) {
           // Verbindung geschafft
-          connect(selection, n, settings.connectionWeight);
+          connect(selection, n, settings.connectionWeight, settings.bidirectionalConnection);
         }
       }
 
@@ -171,16 +186,18 @@ void draw() {
   case ON:
     start.col = Color.RED;
     stop.col = Color.GREEN;
-    if(settings.path != null) {
-      for(Node n : settings.path) {
+    if (settings.path != null) {
+      int index = 0;
+      for (Node n : settings.path) {
         n.drawSpecial();
+        n.drawSpecialTag(++index);
         start.draw();
         stop.draw();
       }
     }
     break;
   }
-  
+
   // Anziehungskräfte
   if (!freeze)
     stepPos();
@@ -191,12 +208,11 @@ void startDijkstra() {
   new Thread(dik).start();
 }
 
-void connect(Node in, Node out, int weight) {
+void connect(Node in, Node out, int weight, boolean bidir) {
   // Schauen ob die Verbindung schon existiert
-  Connection c = new Connection(in, out, weight, colorId);
+  Connection c = new Connection(in, out, weight, bidir, colorId);
   if (!conns.contains(c)) {
     conns.add(c);
-    print("Verbindung hinzugefügt\n");
   }
 }
 
@@ -205,6 +221,8 @@ void connect(Node in, Node out, int weight) {
 void keyPressed() {
   switch(key) {
   case ' ': // Space macht neuen Knoten
+    if (settings.isCalculating)
+      return;
     // Falls der letzte auf der gleichen Position ist, verschieben
     if (lastAdded != null && lastAdded.cx == mouseX && lastAdded.cy == mouseY) {
       lastAdded.cx += 10;
@@ -217,7 +235,6 @@ void keyPressed() {
     for (Node n : nodes) {
       if (n.isMouseOn(mouseX, mouseY)) {
         nodes.remove(n);
-        print("Knoten entfernt\n");
         ArrayList<Connection> killList = new ArrayList();
         // Verbindungen werden erst auf eine hitliste gesetzt und werden dann entfernt,
         // weil das programm abstürzen würde wenn man mehrere Verbindungen gleichzeitig 
@@ -227,10 +244,7 @@ void keyPressed() {
             killList.add(c);
           }
         }
-        for (Connection c : killList) {
-          conns.remove(c);
-          print("Verbindung entfernt\n");
-        }
+        conns.removeAll(killList);
         return;
       }
     }
@@ -261,12 +275,27 @@ void keyPressed() {
         for (Node ne : nodes) {
           for (Node nee : nodes) {
             if (ne != nee)
-              connect(ne, nee, settings.connectionWeight);
+              connect(ne, nee, settings.connectionWeight, settings.bidirectionalConnection);
           }
         }
       }
     }
     return;
+  case 'r':
+  case 'R':
+    if (!settings.isCalculating) {
+      if (conns.size() > 0) {
+        conns.clear();
+      } else {
+        for (Node ne : nodes) {
+          for (Node nee : nodes) {
+            if (ne != nee && (int)random(10) == 0)
+              connect(ne, nee, (int)random(10), (int)random(2)==0);
+          }
+        }
+      }
+    }
+    break;
   case 'v': 
   case 'V':
     vibr = !vibr;
@@ -283,7 +312,7 @@ void keyPressed() {
         stop.col = Color.DEFAULT;
       start = null;
       stop = null;
-      if(dik != null)
+      if (dik != null)
         dik.stop();
       dik = null;
       settings.path = null;
