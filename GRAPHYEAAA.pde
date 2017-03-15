@@ -81,7 +81,7 @@ void draw() {
   noStroke();
 
   if (spast) {
-    switch((tick / 4) % 3) {
+    switch(abs((tick / 4) % 3)) {
     case 0: 
       background(255, 0, 0); 
       break;
@@ -146,7 +146,7 @@ void draw() {
 
   case SELECT_1:
     if (highlighted != null && !mousePressed) {
-      if ((tick % 120) > 60)
+      if ((abs(tick) % 60) > 30)
         highlighted.drawSpecial();
     } else if (highlighted != null && mousePressed && mouseButton == LEFT) {
       highlighted.col = Color.YELLOW;
@@ -158,7 +158,7 @@ void draw() {
   case SELECT_2:
     if (highlighted == start) break;
     if (highlighted != null && !mousePressed) {
-      if (tick % 120 > 60)
+      if ((abs(tick) % 60) > 30)
         highlighted.drawActivated();
     } else if (highlighted != null && mousePressed && mouseButton == LEFT) {
       highlighted.col = Color.YELLOW;
@@ -283,20 +283,12 @@ void keyPressed() {
         stop.col = Color.DEFAULT;
       start = null;
       stop = null;
+      if(dik != null)
+        dik.stop();
+      dik = null;
+      settings.path = null;
     }
-
-  case '1': 
-  case '!':
-    colorId = Color.DEFAULT;
-    return;
-  case '2': 
-  case '"':
-    colorId = Color.RED;
-    return;
-  case '3': 
-  case '§':
-    colorId = Color.GREEN;
-    return;
+    break;
   }
 }
 

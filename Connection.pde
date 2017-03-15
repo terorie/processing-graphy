@@ -24,7 +24,16 @@ class Connection {
         stroke(255, 255, 0); break;
     }
     
+    // Draw line
     line(in.cx, in.cy, out.cx, out.cy); 
+    
+    // Draw arrow
+    pushMatrix();
+    translate(out.cx, out.cy);
+    rotate(atan2(out.cy-in.cy, out.cx-in.cx));
+    noFill();
+    triangle(-11, 0, -19, 5, -19, -5);
+    popMatrix();
   }
   
   // SAU WICHTIG (ArrayList.contains)

@@ -16,6 +16,7 @@ public class Dijkstra implements Runnable {
   Map<Node, Node> vorgaenger;
   Map<Node, Integer> distance;
   Node highlight = null;
+  boolean abort = false;
 
   public Dijkstra(Set<Node> nodes, Set<Connection> conns, Settings settings, Node start, Node stop) {
     this.settings = settings;
@@ -55,9 +56,20 @@ public class Dijkstra implements Runnable {
           Thread.sleep(100*settings.calculationDelay);
         } catch(InterruptedException ignored) {}
       }
+      
+      if(abort) {
+        settings.isCalculating = false;
+        if(highlight != null)
+          highlight.col = Color.DEFAULT;
+        return;
+      }
     }
     work();
     settings.isCalculating = false;
+  }
+
+  public void stop() {
+    abort = true;
   }
 
   private void work() {
